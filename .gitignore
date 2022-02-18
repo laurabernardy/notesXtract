@@ -11,3 +11,8 @@ HISTORY.txt
 README.txt
 *.jpg
 Output.txt
+marker.py
+import os, sys.py
+import numpy as np.py
+OutputNE.txt
+result.png
