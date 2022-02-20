@@ -1,11 +1,13 @@
 import numpy as np
 import cv2
 import pytesseract
-from tkinter.colorchooser import askcolor
 from tkinter import filedialog as fd
 import tkinter as tk
-import colorsys
-from PIL import Image
+import difflib
+import re
+
+# take string from output and compare with original. count letters and replace with correct ones
+
 
 # path to tesseract installation
 pytesseract.pytesseract.tesseract_cmd = r"C:\Users\Laura\tesseract\tesseract.exe"
@@ -106,11 +108,18 @@ def img_thresh(img_masked): # choose threshold and search for contours
 	bw = cv2.cvtColor(img_masked, cv2.COLOR_BGR2GRAY)
 	blur = cv2.GaussianBlur(bw,(5,5),0)
 	_, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-	kernel = np.ones((5,5), np.uint8)
-	thresh = cv2.erode(thresh, kernel, iterations=1)
 	cv2.imwrite('thresh.jpg', thresh)
 	contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
 	return thresh, contours, hierarchy
+
+def alltxtimg_thresh(imgalltext): # choose threshold and search for contours
+	bw = cv2.cvtColor(imgalltext, cv2.COLOR_BGR2GRAY)
+	blur = cv2.GaussianBlur(bw,(5,5),0)
+	_, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_TRUNC+cv2.THRESH_OTSU)
+	kernel = np.ones((5,5), np.uint8)
+	thresh = cv2.erode(thresh, kernel, iterations=1)
+	cv2.imwrite('threshalltext.jpg', thresh)
+	return thresh
 
 def draw_contours(image, contours):
 # draw contours on the original image
@@ -124,14 +133,61 @@ def draw_contours(image, contours):
 	cv2.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
 	cv2.imwrite('output.jpg', image)
 
+def writealltxt(thresh):
+	with open('Outputall.txt', mode = 'w', encoding="utf-8") as f:
+		data = pytesseract.image_to_string(thresh, lang='eng',config='-c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.:;,-+_!?/\\\"[]{}()<>=*&%$#@!~ " --psm 1')
+		f.write(data)
+
+def writeoutput(thresh):
+	with open('Output.txt', mode = 'w', encoding="utf-8") as f:
+		data = pytesseract.image_to_string(thresh, lang='eng',config='-c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.:;,-+_!?/\\\"[]{}()<>=*&%$#@!~ " --psm 1')
+		f.write(data)
+
+def ngrams(input, n):
+    input = input.split(' ')
+    output = []
+    for i in range(len(input)-n+1):
+        output.append(input[i:i+n])
+    return output
+
+def errormanage():
+	f1 = open("Output.txt", "r")
+	f2 = open("Outputall.txt", "r") 
+	#f2list = [(line.strip()).split() for line in f2]
+	#print(f2list)
+	N = 3
+	f2 = f2.read().replace('\n',' ')
+	grams2 = ngrams(f2 , N)
+	grams2list = []
+	reslist=[]
+	for gram2 in grams2:
+		strgr2 = ' '.join(gram2)
+		grams2list.append(strgr2)
+	for line1 in f1:
+		line1 = re.sub(r"\s+"," ",line1).strip()
+		grams = ngrams(line1, N)
+		for gram in grams:
+			strgr = ' '.join(gram)
+			#print(f'strgr:{strgr}')
+			result = difflib.get_close_matches(strgr, grams2list, cutoff=0.8)
+			if len(result)>0:
+				reslist.append(result[0].split())
+	print(reslist)
+	#res = ' '.join(val.split()[0] for val in (reslist)) + ' ' +  reslist[-1].split()[-1]
+	#print(res)	
+		#	else:
+		#		print("Line ", i, ":")
+	    #        # else print that line from both files
+		#		print("\tFile 1:", line1, end='')
+		#		print("\tFile 2:", line2, end='')
+		#	break
+	f1.close()                                       
+
+
 # color chooser for marker color
 root = tk.Tk()
 root.withdraw()
-#color = askcolor(title = "Choose the marker color")
-#chosenC = color[0]
-#
-## rgb value ton hsv values
-#hsvVal = rgb2hsv(chosenC)
+root.attributes("-topmost", True)
 
 # choose image
 filename = fd.askopenfilename()
@@ -143,17 +199,14 @@ scale_percent = 220 # percent of original size
 width = int(image.shape[1] * scale_percent / 100)
 height = int(image.shape[0] * scale_percent / 100)
 dim = (width, height)
-
 image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
 
+writealltxt(alltxtimg_thresh(image))
 hsv, lower_color, upper_color, image = to_hsv(image)
 img_masked = mask(hsv, lower_color, upper_color, image)
 thresh, contours, hierarchy = img_thresh(img_masked)
 draw_contours(image, contours)
-
+writeoutput(thresh)
+errormanage()
 # extract text from marked areas and write to txt
-with open('Output.txt', mode = 'w', encoding="utf-8") as f:
-    data = pytesseract.image_to_string(thresh, lang='eng',config='-c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.:;,-+_!?/\\\"[]{}()<>=*&%$#@!~ " --psm 6')
-    f.write(data)
 
-print(f)
