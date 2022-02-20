@@ -153,8 +153,6 @@ def ngrams(input, n):
 def errormanage():
 	f1 = open("Output.txt", "r")
 	f2 = open("Outputall.txt", "r") 
-	#f2list = [(line.strip()).split() for line in f2]
-	#print(f2list)
 	N = 3
 	f2 = f2.read().replace('\n',' ')
 	grams2 = ngrams(f2 , N)
@@ -166,23 +164,32 @@ def errormanage():
 	for line1 in f1:
 		line1 = re.sub(r"\s+"," ",line1).strip()
 		grams = ngrams(line1, N)
+		if len(grams) == 0:
+			grams = [line1.split(' ')]
 		for gram in grams:
 			strgr = ' '.join(gram)
 			#print(f'strgr:{strgr}')
 			result = difflib.get_close_matches(strgr, grams2list, cutoff=0.8)
 			if len(result)>0:
 				reslist.append(result[0].split())
-	print(reslist)
-	#res = ' '.join(val.split()[0] for val in (reslist)) + ' ' +  reslist[-1].split()[-1]
-	#print(res)	
-		#	else:
-		#		print("Line ", i, ":")
-	    #        # else print that line from both files
-		#		print("\tFile 1:", line1, end='')
-		#		print("\tFile 2:", line2, end='')
-		#	break
-	f1.close()                                       
-
+	#take first trigram
+	result = []
+	result.append(" ".join(reslist[0]))
+	for i in range(len(reslist)-1):
+	#if 1. and 2. trigram have 1 or less words in common --> take 2. trigramm
+		if len(set(reslist[i])&set(reslist[i+1])) <=1:
+			result.append(f"\n {' '.join(reslist[i+1])}")
+		else:
+	#if 1. word in 2. trigram is last word in 1. trigram --> take 2. and 3. word from 2. trigram
+			if reslist[i][2] == reslist[i+1][0]:
+				result.append("".join(reslist[i+1][1]),"".join(reslist[i+1][2]))
+			else:
+	# if 1. word in 2. trigram is 2. word in 1. trigram --> take 3. word from 2. trigram
+				if reslist[i+1][0] == reslist[i][1]:
+					result.append("".join(reslist[i+1][2]))
+	print(" ".join(result))
+	f1.close()                                     
+# TODO: wenn 2 wörter aufeinanderfolgen, eines löschen;; Trigram Probleme wenn in Line weniger als 3 Wörter sind
 
 # color chooser for marker color
 root = tk.Tk()
