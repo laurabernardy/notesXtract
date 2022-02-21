@@ -5,144 +5,92 @@ from tkinter import filedialog as fd
 import tkinter as tk
 import difflib
 import re
+import os
 
-# take string from output and compare with original. count letters and replace with correct ones
+# path to tesseract installation (just needed if used with an other lang package than english)
+#pytesseract.pytesseract.tesseract_cmd = r"C:\Users\Laura\tesseract\tesseract.exe"
 
-
-# path to tesseract installation
-pytesseract.pytesseract.tesseract_cmd = r"C:\Users\Laura\tesseract\tesseract.exe"
-#
-#
-#color_explore = np.zeros((150,150,3), np.uint8)  
-#color_selected = np.zeros((150,150,3), np.uint8)
-#
-#
-##save selected color RGB in file
-#def write_to_file(R,G,B):
-#	f = open("saved_color.txt", "a")
-#	RGB_color=str(R) + "," + str(G) + "," + str(B) + str("\n")
-#	f.write(RGB_color)
-#	f.close()
-#
-#
-#
-##Mouse Callback function
-#def show_color(event,x,y,flags,param): 
-#	
-#	B=img[y,x][0]
-#	G=img[y,x][1]
-#	R=img[y,x][2]
-#	color_explore [:] = (B,G,R)
-#
-#	if event == cv2.EVENT_LBUTTONDOWN:
-#		color_selected [:] = (B,G,R)
-#		print(R,G,B)
-#		write_to_file(R,G,B)
-#		cv2.destroyAllWindows()
-#
-##live update color with cursor
-#cv2.namedWindow('color_explore')
-#cv2.resizeWindow("color_explore", 50,50);
-#
-##Show selected color when left mouse button pressed
-#cv2.namedWindow('color_selected')
-#cv2.resizeWindow("color_selected", 50,50);
-#
-##image window for sample image
-#cv2.namedWindow('image')
-#
-##sample image path
-#img_path="D:/Projekte/MarksXtract/MarksXtract/Examples/testitest.jpg"
-#
-##read sample image
-#image=cv2.imread(img_path)
-#img = cv2.resize(image, (500, 400))    
-#
-##mouse call back function declaration
-#cv2.setMouseCallback('image',show_color)
-#
-##while loop to live update
-#while (1):
-#	
-#	cv2.imshow('image',img)
-#	cv2.imshow('color_explore',color_explore)
-#	cv2.imshow('color_selected',color_selected)
-#	if cv2.waitKey(1) & 0xFF == 27:
-#		break
-#
-#cv2.destroyAllWindows()
-#
-#
-#
-#def rgb2hsv(*args):
-#	# RGB input out of (255,255,255)
-#	# HSV output out of (180,255,255)
-#	if len(args) == 1:
-#		r,g,b = [c/255.0 for c in args[0]]
-#	else:
-#		r,g,b = [c/255.0 for c in args]
-#	
-#	h,s,v = colorsys.rgb_to_hsv(r,g,b)
-#	return h*180,s*255,v*255
-
-
+#convert image to hsv and mark colored frequency for finding hightlighted areas
 def to_hsv(image):
-	# convert to hsv image
 	hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 	# color region is chosen due to different shadings in highlights
 	lower_color = np.array([0,80,80])
 	upper_color = np.array([179,255,255])
 	return hsv, lower_color, upper_color, image
 
+# resize image for better results 
+def resize(image):
+	scale_percent = 220
+	width = int(image.shape[1] * scale_percent / 100)
+	height = int(image.shape[0] * scale_percent / 100)
+	dim = (width, height)
+	image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
+	return image
+
+#mask input to get only marked areas
 def mask(hsv, lower_color, upper_color, image):
-	# Mask the HSV image to get only marked areas
 	mask = cv2.inRange(hsv, lower_color, upper_color)
-	#kernel  = np.ones((5,5), np.uint8)
-	#mask = cv2.dilate(mask, kernel, iterations=1)
-	cv2.imwrite('mask.jpg', mask)
+	cv2.imwrite('./temp/mask.jpg', mask)
 	# cut image with mask
 	img_masked = cv2.bitwise_and(image, image, mask= mask)
 	return img_masked
 
-def img_thresh(img_masked): # choose threshold and search for contours
+#thresh of highlighted areas and contour searching
+def img_thresh(img_masked):
 	bw = cv2.cvtColor(img_masked, cv2.COLOR_BGR2GRAY)
 	blur = cv2.GaussianBlur(bw,(5,5),0)
 	_, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-	cv2.imwrite('thresh.jpg', thresh)
+	cv2.imwrite('./temp/thresh.jpg', thresh)
 	contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
 	return thresh, contours, hierarchy
 
+#thresh of whole document
 def alltxtimg_thresh(imgalltext): # choose threshold and search for contours
 	bw = cv2.cvtColor(imgalltext, cv2.COLOR_BGR2GRAY)
 	blur = cv2.GaussianBlur(bw,(5,5),0)
 	_, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_TRUNC+cv2.THRESH_OTSU)
 	kernel = np.ones((5,5), np.uint8)
 	thresh = cv2.erode(thresh, kernel, iterations=1)
-	cv2.imwrite('threshalltext.jpg', thresh)
+	cv2.imwrite('./temp/threshalltext.jpg', thresh)
 	return thresh
 
-def draw_contours(image, contours):
 # draw contours on the original image
+def draw_contours(image, contours):
 	image_copy = image.copy()
 	min_area = 5000
 	for c in contours:
 		area = cv2.contourArea(c)
 		if area > min_area:
 			cv2.drawContours(image,[c], 0, (36,255,12), 2)
-
 	cv2.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
-	cv2.imwrite('output.jpg', image)
+	cv2.imwrite('./temp/output.jpg', image)
 
+#rename new file if file with name already exists
+def next(path):
+    filename, extension = os.path.splitext(path)
+    counter = 1
+    while os.path.exists(path):
+        path = filename + " (" + str(counter) + ")" + extension
+        counter += 1
+    return path
+
+#Write OCR Output of whole document
 def writealltxt(thresh):
-	with open('Outputall.txt', mode = 'w', encoding="utf-8") as f:
+	outputall = next('./Output/Outputall.txt')
+	with open(outputall, mode = 'w', encoding="utf-8") as f:
 		data = pytesseract.image_to_string(thresh, lang='eng',config='-c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.:;,-+_!?/\\\"[]{}()<>=*&%$#@!~ " --psm 1')
 		f.write(data)
+		return outputall
 
+#Write OCR output of highlighted areas
 def writeoutput(thresh):
-	with open('Output.txt', mode = 'w', encoding="utf-8") as f:
+	output = next('./Output/Output.txt')
+	with open(output, mode = 'w', encoding="utf-8") as f:
 		data = pytesseract.image_to_string(thresh, lang='eng',config='-c preserve_interword_spaces=1 -c tessedit_char_whitelist="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.:;,-+_!?/\\\"[]{}()<>=*&%$#@!~ " --psm 1')
 		f.write(data)
+		return output
 
+#Build ngrams
 def ngrams(input, n):
     input = input.split(' ')
     output = []
@@ -150,12 +98,17 @@ def ngrams(input, n):
         output.append(input[i:i+n])
     return output
 
-def errormanage():
-	f1 = open("Output.txt", "r")
-	f2 = open("Outputall.txt", "r") 
-	N = 3
+#try to restore the original text for marked areas (and remove fragments) if not ok by using trigrams
+#depends on how readable the original text is
+#won't remove duplicate words, that follow each other, caused by the matching process (To do!)
+#can include rarely words, that are'nt correct, because of the matching process (searches best fit autmatically)
+#Information can get lost, when it's less than 80% readable
+def errormanage(output, outputall):
+	f1 = open(output, "r")
+	f2 = open(outputall, "r") 
 	f2 = f2.read().replace('\n',' ')
-	grams2 = ngrams(f2 , N)
+	f2 = re.sub(r'\s+',' ', f2)
+	grams2 = ngrams(f2 , 3)
 	grams2list = []
 	reslist=[]
 	for gram2 in grams2:
@@ -163,12 +116,11 @@ def errormanage():
 		grams2list.append(strgr2)
 	for line1 in f1:
 		line1 = re.sub(r"\s+"," ",line1).strip()
-		grams = ngrams(line1, N)
+		grams = ngrams(line1, 3)
 		if len(grams) == 0:
 			grams = [line1.split(' ')]
 		for gram in grams:
 			strgr = ' '.join(gram)
-			#print(f'strgr:{strgr}')
 			result = difflib.get_close_matches(strgr, grams2list, cutoff=0.8)
 			if len(result)>0:
 				reslist.append(result[0].split())
@@ -187,33 +139,31 @@ def errormanage():
 	# if 1. word in 2. trigram is 2. word in 1. trigram --> take 3. word from 2. trigram
 				if reslist[i+1][0] == reslist[i][1]:
 					result.append("".join(reslist[i+1][2]))
+				else:
+					pass
 	print(" ".join(result))
+	with open((next('./Output/Output_corr.txt')), mode = 'w', encoding="utf-8") as f:
+		f.write(" ".join(result))
+	
 	f1.close()                                     
-# TODO: wenn 2 wörter aufeinanderfolgen, eines löschen;; Trigram Probleme wenn in Line weniger als 3 Wörter sind
 
-# color chooser for marker color
+# config of tk window
 root = tk.Tk()
 root.withdraw()
 root.attributes("-topmost", True)
 
-# choose image
-filename = fd.askopenfilename()
-# read input image
-image = cv2.imread(filename, cv2.IMREAD_COLOR)
+# choose image(s)
+filenames = fd.askopenfilenames(parent=root, title='Choose a file')
 
-# resize image for better results 
-scale_percent = 220 # percent of original size
-width = int(image.shape[1] * scale_percent / 100)
-height = int(image.shape[0] * scale_percent / 100)
-dim = (width, height)
-image = cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
-
-writealltxt(alltxtimg_thresh(image))
-hsv, lower_color, upper_color, image = to_hsv(image)
-img_masked = mask(hsv, lower_color, upper_color, image)
-thresh, contours, hierarchy = img_thresh(img_masked)
-draw_contours(image, contours)
-writeoutput(thresh)
-errormanage()
-# extract text from marked areas and write to txt
+# read input image(s)
+for filename in filenames:
+	image = cv2.imread(filename, cv2.IMREAD_COLOR)
+	image = resize(image)
+	outputall = writealltxt(alltxtimg_thresh(image))
+	hsv, lower_color, upper_color, image = to_hsv(image)
+	img_masked = mask(hsv, lower_color, upper_color, image)
+	thresh, contours, hierarchy = img_thresh(img_masked)
+	draw_contours(image, contours)
+	output = writeoutput(thresh)
+	errormanage(output, outputall)
 
