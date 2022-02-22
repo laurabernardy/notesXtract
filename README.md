@@ -27,6 +27,14 @@ The documents will be processed and your notes will be written to a txt-file. If
 After that, you can delete the content of the temp directory (or leave it).
 
 
+![grafik](https://user-images.githubusercontent.com/97034038/155146149-25eabd17-d6b9-4c4c-b9f3-7eaef22103c1.png)
+
+---->
+
+![grafik](https://user-images.githubusercontent.com/97034038/155146350-833e99c5-27de-412f-b33a-8181d7a84856.png)
+
+
+
 # please notice
 
 How much the notes can be corrected afterwards depends on how well tesserect can read your input file. 
