@@ -1,6 +1,6 @@
 # notesXtract
 
-Extractor for color highlighted notes from scanned (or photographed) documents with OpenCV and Tesseract.
+Basic Extractor for color highlighted notes from scanned (or photographed) documents with OpenCV and Tesseract.
 
 
 # get started
