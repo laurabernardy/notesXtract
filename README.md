@@ -47,12 +47,12 @@ Please keep in mind: It's for notes, not for perfect documents (please be kind) 
 
 # to do
 
-Better method for errorcorrection (if not trigram -> don't give back 3 words) \n
-No word duplicates anymore, that follow each other \n
-More comfortable way to turn errorcorrection on/off (GUI?) \n
-Error Warning if input is not readable \n
-Support of PDFs \n
-Maybe an exe-file \n
+Better method for errorcorrection (if not trigram -> don't give back 3 words)  
+No word duplicates anymore, that follow each other  
+More comfortable way to turn errorcorrection on/off (GUI?)  
+Error Warning if input is not readable  
+Support of PDFs  
+Maybe an exe-file  
 
 
 # footnotes
