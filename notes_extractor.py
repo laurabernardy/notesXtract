@@ -8,7 +8,7 @@ import re
 import os
 
 # path to tesseract installation (just needed if used with an other lang package than english)
-#pytesseract.pytesseract.tesseract_cmd = r"C:\Users\Laura\tesseract\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = r"C:\Users\Laura\tesseract\tesseract.exe"
 
 #convert image to hsv and mark colored frequency for finding hightlighted areas
 def to_hsv(image):
