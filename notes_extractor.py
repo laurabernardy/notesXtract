@@ -134,7 +134,8 @@ def errormanage(output, outputall):
 		else:
 	#if 1. word in 2. trigram is last word in 1. trigram --> take 2. and 3. word from 2. trigram
 			if reslist[i][2] == reslist[i+1][0]:
-				result.append("".join(reslist[i+1][1]),"".join(reslist[i+1][2]))
+				result.append("".join(reslist[i+1][1]))
+				result.append("".join(reslist[i+1][2]))
 			else:
 	# if 1. word in 2. trigram is 2. word in 1. trigram --> take 3. word from 2. trigram
 				if reslist[i+1][0] == reslist[i][1]:
