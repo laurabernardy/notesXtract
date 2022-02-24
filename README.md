@@ -1,6 +1,6 @@
 # notesXtract
 
-Extractor for color highlighted notes from scanned (or photographed) documents with OpenCV and Tesseract.
+Basic Extractor for color highlighted notes from scanned (or photographed) documents with OpenCV and Tesseract.
 
 
 # get started
@@ -27,6 +27,9 @@ The documents will be processed and your notes will be written to a txt-file. If
 After that, you can delete the content of the temp directory (or leave it).
 
 
+<img src="https://user-images.githubusercontent.com/97034038/155146149-25eabd17-d6b9-4c4c-b9f3-7eaef22103c1.png" height="250"> ----> <img src="https://user-images.githubusercontent.com/97034038/155146350-833e99c5-27de-412f-b33a-8181d7a84856.png" height="200">
+
+
 # please notice
 
 How much the notes can be corrected afterwards depends on how well tesserect can read your input file. 
@@ -44,12 +47,12 @@ Please keep in mind: It's for notes, not for perfect documents (please be kind) 
 
 # to do
 
-Better method for errorcorrection (if not trigram -> don't give back 3 words)
-No word duplicates anymore, that follow each other
-More comfortable way to turn errorcorrection on/off (GUI?)
-Error Warning if input is not readable
-Support of PDFs
-Maybe an exe-file
+Better method for errorcorrection (if not trigram -> don't give back 3 words)  
+No word duplicates anymore, that follow each other  
+More comfortable way to turn errorcorrection on/off (GUI?)  
+Error Warning if input is not readable  
+Support of PDFs  
+Maybe an exe-file  
 
 
 # footnotes
